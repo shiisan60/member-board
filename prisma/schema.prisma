@@ -9,22 +9,26 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 // User model
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  password      String
-  image         String?
-  role          UserRole  @default(USER)
-  posts         Post[]
-  comments      Comment[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  email             String    @unique
+  name              String?
+  password          String
+  image             String?
+  role              UserRole  @default(USER)
+  emailVerified     DateTime?
+  verificationToken String?   @unique
+  resetToken        String?   @unique
+  resetTokenExpiry  DateTime?
+  posts             Post[]
+  comments          Comment[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 // Post model
