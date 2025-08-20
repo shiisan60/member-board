@@ -61,7 +61,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
       allowedOrigins: process.env.NODE_ENV === 'production' 
-        ? ['https://your-domain.com'] 
+        ? ['https://member-board-week2.vercel.app'] 
         : ['http://localhost:3000'],
     },
   },
