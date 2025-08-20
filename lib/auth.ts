@@ -7,8 +7,13 @@ import bcrypt from "bcryptjs"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  // 開発中はNextAuthの詳細ログを有効化
-  debug: process.env.NODE_ENV !== "production",
+  // 本番でも一時的にデバッグを有効化（原因調査のため）
+  debug: true,
+  // ホスト信頼と公開URLを明示（Vercel等のプロキシ配下での不整合を防止）
+  trustHost: process.env.AUTH_TRUST_HOST === 'true',
+  basePath: "/api/auth",
+  // next-auth v5 互換の AUTH_* を優先し、未設定時は NEXTAUTH_* を利用
+  // これにより Configuration エラーを避ける
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -74,6 +79,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/login",
     error: "/login",
   },
+  // 既知のトラブルを避けるため、明示的に URL/SECRET を指定
+  // AUTH_URL/NEXTAUTH_URL はメールテンプレート等でも参照
+  // @ts-ignore - 型にないが Auth.js v5 で有効
+  url: process.env.AUTH_URL || process.env.NEXTAUTH_URL,
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
