@@ -16,8 +16,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   // これにより Configuration エラーを避ける
   providers: [
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // 複数の環境変数にフォールバック（設定ミスを避ける）
+      clientId:
+        process.env.GOOGLE_CLIENT_ID ||
+        process.env.AUTH_GOOGLE_ID ||
+        "",
+      clientSecret:
+        process.env.GOOGLE_CLIENT_SECRET ||
+        process.env.AUTH_GOOGLE_SECRET ||
+        "",
     }),
     Credentials({
       name: "credentials",
