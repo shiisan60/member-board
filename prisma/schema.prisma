@@ -9,55 +9,73 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 // User model
 model User {
-  id                String    @id @default(cuid())
+  id                String    @id @default(cuid()) @map("_id")
   email             String    @unique
+  password          String?   // Optional for social login
   name              String?
-  password          String
+  bio               String?   // 自己紹介文
+  role              String    @default("user")
   image             String?
-  role              UserRole  @default(USER)
   emailVerified     DateTime?
-  verificationToken String?   @unique
-  resetToken        String?   @unique
-  resetTokenExpiry  DateTime?
+  verificationToken String?   // メール認証用トークン
+  tokenExpiry       DateTime? // トークンの有効期限
+  accounts          Account[]
+  sessions          Session[]
   posts             Post[]
-  comments          Comment[]
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+
+  @@map("users")
+}
+
+// Account model for OAuth providers
+model Account {
+  id                String  @id @default(cuid()) @map("_id")
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// Session model
+model Session {
+  id           String   @id @default(cuid()) @map("_id")
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
 }
 
 // Post model
 model Post {
-  id            String    @id @default(cuid())
-  title         String
-  content       String
-  published     Boolean   @default(false)
-  author        User      @relation(fields: [authorId], references: [id])
-  authorId      String
-  comments      Comment[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id        String   @id @default(cuid()) @map("_id")
+  title     String
+  content   String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("posts")
 }
 
-// Comment model
-model Comment {
-  id            String    @id @default(cuid())
-  content       String
-  post          Post      @relation(fields: [postId], references: [id])
-  postId        String
-  author        User      @relation(fields: [authorId], references: [id])
-  authorId      String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
-
-// Enum for user roles
-enum UserRole {
-  USER
-  ADMIN
-}

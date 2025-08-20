@@ -1,15 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { hashPassword } from '@/lib/auth';
+import { checkPasswordStrength, validateEmail } from '@/lib/validators';
+import { sendVerificationEmail } from '@/lib/email';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
   try {
     const { email, password, name } = await request.json();
 
-    // 既存ユーザーチェック
+    // メールアドレスのバリデーション
+    if (!validateEmail(email)) {
+      return NextResponse.json(
+        { error: '有効なメールアドレスを入力してください' },
+        { status: 400 }
+      );
+    }
+
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: 'メールアドレスとパスワードは必須です' },
+        { status: 400 }
+      );
+    }
+
+    // パスワード強度チェック
+    const passwordStrength = checkPasswordStrength(password);
+    if (!passwordStrength.isValid) {
+      return NextResponse.json(
+        { 
+          error: 'パスワードが要件を満たしていません',
+          details: passwordStrength.feedback
+        },
+        { status: 400 }
+      );
+    }
+
+    // 既存ユーザーの確認
     const existingUser = await prisma.user.findUnique({
       where: { email },
+      select: { id: true, email: true, name: true, password: true },
     });
+
+    // 既に存在していて、かつパスワード未設定（例: Googleログインで作成）の場合は
+    // パスワードを設定して通常ログインできるように更新する
+    if (existingUser && !existingUser.password) {
+      const hashedPassword = await hashPassword(password);
+      const updated = await prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          password: hashedPassword,
+          name: existingUser.name || name || email.split('@')[0],
+        },
+        select: { id: true, email: true, name: true },
+      });
+
+      return NextResponse.json(
+        {
+          message: '既存アカウントにパスワードを設定しました。ログインできます。',
+          user: { id: updated.id, email: updated.email, name: updated.name },
+        },
+        { status: 200 }
+      );
+    }
 
     if (existingUser) {
       return NextResponse.json(
@@ -19,19 +72,57 @@ export async function POST(request: NextRequest) {
     }
 
     // パスワードをハッシュ化
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await hashPassword(password);
 
-    // ユーザーを作成
+    // メール認証用トークンの生成
+    const verificationToken = uuidv4();
+    const tokenExpiry = new Date();
+    tokenExpiry.setHours(tokenExpiry.getHours() + 24); // 24時間有効
+
+    // ユーザーを作成（emailVerifiedはnullのまま）
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
-        name,
+        name: name || email.split('@')[0],
+        verificationToken,
+        tokenExpiry,
+        emailVerified: null, // メール未認証状態
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
       },
     });
 
+    // 確認メールを送信
+    try {
+      await sendVerificationEmail(
+        user.email,
+        user.name || 'ユーザー',
+        verificationToken
+      );
+    } catch (emailError) {
+      console.error('確認メール送信エラー:', emailError);
+      // メール送信に失敗してもユーザー作成は成功とする
+      // ただし、警告メッセージを含める
+      return NextResponse.json(
+        { 
+          message: '登録は完了しましたが、確認メールの送信に失敗しました。',
+          user: { id: user.id, email: user.email, name: user.name },
+          warning: 'メール送信に失敗しました。後ほど再送信してください。'
+        },
+        { status: 201 }
+      );
+    }
+
     return NextResponse.json(
-      { message: '登録が完了しました', user: { id: user.id, email: user.email, name: user.name } },
+      { 
+        message: '仮登録が完了しました。確認メールをご確認ください。',
+        user: { id: user.id, email: user.email, name: user.name },
+        requiresEmailVerification: true
+      },
       { status: 201 }
     );
   } catch (error) {

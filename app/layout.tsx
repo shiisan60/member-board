@@ -1,30 +1,27 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-
-const inter = Inter({ subsets: ["latin"] });
+import type { Metadata } from "next"
+import "./globals.css"
+import { auth } from "@/lib/auth"
+import ClientLayout from "@/components/ClientLayout"
 
 export const metadata: Metadata = {
   title: "Member Board",
   description: "A community board for members",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
+  const session = await auth()
+
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-grow">{children}</main>
-          <Footer />
-        </div>
+    <html lang="ja">
+      <body suppressHydrationWarning={true}>
+        <ClientLayout session={session}>
+          {children}
+        </ClientLayout>
       </body>
     </html>
-  );
+  )
 }

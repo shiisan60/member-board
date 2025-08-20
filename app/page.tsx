@@ -1,103 +1,156 @@
-import Image from "next/image";
+"use client"
+
+import React from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import {
+  Container,
+  Typography,
+  Button,
+  Box,
+  Card,
+  CardContent,
+  Grid,
+  Paper,
+  Chip,
+  Alert
+} from "@mui/material"
+import {
+  Dashboard as DashboardIcon,
+  Login as LoginIcon,
+  PersonAdd as PersonAddIcon,
+  Security as SecurityIcon,
+  Speed as SpeedIcon,
+  Code as CodeIcon
+} from "@mui/icons-material"
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { data: session, status } = useSession()
+  const router = useRouter()
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const features = [
+    {
+      icon: <SecurityIcon color="primary" fontSize="large" />,
+      title: "セキュアな認証",
+      description: "NextAuth.jsとbcryptによる安全なユーザー認証システム"
+    },
+    {
+      icon: <SpeedIcon color="primary" fontSize="large" />,
+      title: "高速パフォーマンス",
+      description: "Next.js 15とReact 19による最新の技術スタック"
+    },
+    {
+      icon: <CodeIcon color="primary" fontSize="large" />,
+      title: "モダンな開発環境",
+      description: "TypeScript、Material-UI、Prismaを使用した開発環境"
+    }
+  ]
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 6 }}>
+      {/* Hero Section */}
+      <Box sx={{ textAlign: "center", mb: 8 }}>
+        <Typography variant="h2" component="h1" gutterBottom sx={{ fontWeight: "bold", mb: 3 }}>
+          Member Board
+        </Typography>
+        <Typography variant="h5" color="text.secondary" sx={{ mb: 4, maxWidth: "800px", mx: "auto" }}>
+          Next.js 15とNextAuth.jsで構築された<br />
+          モダンなメンバー管理システム
+        </Typography>
+        
+        {status === "loading" ? (
+          <Typography>読み込み中...</Typography>
+        ) : session ? (
+          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+            <Alert severity="success" sx={{ mb: 2 }}>
+              {session.user?.name || "ユーザー"}さん、ログイン中です
+            </Alert>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<DashboardIcon />}
+              onClick={() => router.push("/dashboard")}
+              sx={{ px: 4, py: 1.5 }}
+            >
+              ダッシュボードを開く
+            </Button>
+          </Box>
+        ) : (
+          <Box sx={{ display: "flex", justifyContent: "center", gap: 2, flexWrap: "wrap" }}>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<LoginIcon />}
+              onClick={() => router.push("/login")}
+              sx={{ px: 4, py: 1.5 }}
+            >
+              ログイン
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              startIcon={<PersonAddIcon />}
+              onClick={() => router.push("/register")}
+              sx={{ px: 4, py: 1.5 }}
+            >
+              新規登録
+            </Button>
+          </Box>
+        )}
+      </Box>
+
+      {/* Features Section */}
+      <Box sx={{ mb: 8 }}>
+        <Typography variant="h4" component="h2" textAlign="center" gutterBottom sx={{ mb: 6 }}>
+          主な機能
+        </Typography>
+        <Grid container spacing={4}>
+          {features.map((feature, index) => (
+            <Grid item xs={12} md={4} key={index}>
+              <Card elevation={2} sx={{ height: "100%", textAlign: "center", p: 2 }}>
+                <CardContent>
+                  <Box sx={{ mb: 2 }}>
+                    {feature.icon}
+                  </Box>
+                  <Typography variant="h6" component="h3" gutterBottom>
+                    {feature.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {feature.description}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+
+      {/* Tech Stack Section */}
+      <Paper elevation={1} sx={{ p: 4, textAlign: "center", bgcolor: "grey.50" }}>
+        <Typography variant="h5" component="h2" gutterBottom>
+          技術スタック
+        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 1, mt: 3 }}>
+          {[
+            "Next.js 15",
+            "React 19",
+            "NextAuth.js",
+            "MongoDB",
+            "Prisma",
+            "Material-UI",
+            "TypeScript",
+            "bcrypt"
+          ].map((tech) => (
+            <Chip
+              key={tech}
+              label={tech}
+              variant="outlined"
+              color="primary"
+              sx={{ m: 0.5 }}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+          ))}
+        </Box>
+      </Paper>
+    </Container>
+  )
 }

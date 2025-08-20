@@ -1,7 +1,18 @@
 #!/usr/bin/env node
 
 const nodemailer = require('nodemailer');
-require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+
+// .env.localを優先して読み込み、なければ.envを読み込む
+const envLocalPath = path.join(process.cwd(), '.env.local');
+const envPath = path.join(process.cwd(), '.env');
+
+if (fs.existsSync(envLocalPath)) {
+  require('dotenv').config({ path: envLocalPath });
+} else {
+  require('dotenv').config({ path: envPath });
+}
 
 console.log('===================================');
 console.log('🔌 SMTP接続テストスクリプト');

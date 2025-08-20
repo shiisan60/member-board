@@ -41,3 +41,26 @@ yarn-error.log*
 next-env.d.ts
 
 /app/generated/prisma
+
+#OAuthクライアントが作成されました
+
+#クライアント ID には、Google Auth Platform の [クライアント] タブからいつでもアクセスできます。
+
+#OAuthアクセスはテストユーザーに制限されています OAuth同意画面に記載されています
+#クライアントID
+
+#2025年6月以降、このダイアログを閉じるとクライアントシークレットの表示やダウンロードができなくなります。以下の情報をコピーまたはダウンロードし、安全に保管してください。
+#クライアントシークレット
+
+#作成日
+#2025年8月17日午後4時29分39秒 GMT+9
+#状態
+#有効
+
+# local data / secrets
+/data/
+/data/mongodb/
+/prisma/dev.db
+cookie.txt
+cookies.txt
+.npmrc

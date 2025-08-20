@@ -8,17 +8,22 @@ console.log('📧 メール設定確認スクリプト');
 console.log('===================================\n');
 
 // .envファイルの読み込み
+const envLocalPath = path.join(process.cwd(), '.env.local');
 const envPath = path.join(process.cwd(), '.env');
 const envExamplePath = path.join(process.cwd(), '.env.sakura.example');
 
-if (!fs.existsSync(envPath)) {
-  console.error('❌ .envファイルが見つかりません');
-  console.log('💡 .env.sakura.exampleを参考に.envファイルを作成してください\n');
+// .env.localを優先して読み込み、なければ.envを読み込む
+if (fs.existsSync(envLocalPath)) {
+  require('dotenv').config({ path: envLocalPath });
+  console.log('📁 .env.localから設定を読み込みました\n');
+} else if (fs.existsSync(envPath)) {
+  require('dotenv').config({ path: envPath });
+  console.log('📁 .envから設定を読み込みました\n');
+} else {
+  console.error('❌ .env.localまたは.envファイルが見つかりません');
+  console.log('💡 .env.sakura.exampleを参考に.env.localファイルを作成してください\n');
   process.exit(1);
 }
-
-// 環境変数の読み込み
-require('dotenv').config();
 
 // 必須設定項目
 const requiredVars = [

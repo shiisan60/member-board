@@ -1,0 +1,7 @@
+[defaults]
+url = https://sentry.io/
+org = your-org
+project = member-board
+
+[auth]
+token = your-sentry-auth-token
