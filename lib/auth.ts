@@ -16,15 +16,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   // これにより Configuration エラーを避ける
   providers: [
     Google({
-      // 複数の環境変数にフォールバック（設定ミスを避ける）
-      clientId:
-        process.env.GOOGLE_CLIENT_ID ||
-        process.env.AUTH_GOOGLE_ID ||
-        "",
-      clientSecret:
-        process.env.GOOGLE_CLIENT_SECRET ||
-        process.env.AUTH_GOOGLE_SECRET ||
-        "",
+      // 複数の環境変数にフォールバック + JSON貼り付け誤りにも耐性を持たせる
+      clientId: (() => {
+        const raw =
+          process.env.GOOGLE_CLIENT_ID ||
+          process.env.AUTH_GOOGLE_ID ||
+          ""
+        try {
+          // GoogleのJSONをそのまま貼ったケースに対応
+          const obj = JSON.parse(raw)
+          if (obj?.web?.client_id) return obj.web.client_id as string
+        } catch {}
+        return raw
+      })(),
+      clientSecret: (() => {
+        const raw =
+          process.env.GOOGLE_CLIENT_SECRET ||
+          process.env.AUTH_GOOGLE_SECRET ||
+          ""
+        try {
+          const obj = JSON.parse(raw)
+          if (obj?.web?.client_secret) return obj.web.client_secret as string
+        } catch {}
+        return raw
+      })(),
     }),
     Credentials({
       name: "credentials",
