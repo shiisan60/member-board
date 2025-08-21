@@ -54,7 +54,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       })(),
       // 学習/検証用途: 同一メールの既存アカウントにGoogleを自動リンク
       // 本番運用ではメール乗っ取りリスクを避けるためオフ推奨
-      allowDangerousEmailAccountLinking: true,
+      allowDangerousEmailAccountLinking: false,
     }),
     Credentials({
       name: "credentials",
@@ -121,10 +121,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   // @ts-ignore - 型にないが Auth.js v5 で有効
   url: getPublicUrl(),
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       // Google OAuth で同一メールの既存ユーザーが居る場合、強制的にアカウントをリンク
       try {
         if (account?.provider === 'google' && user?.email) {
+          // email_verified を厳格チェック (profile または id_token から判定)
+          let emailVerified = false
+          const prof: any = profile || {}
+          if (typeof prof.email_verified === 'boolean') {
+            emailVerified = prof.email_verified
+          } else if ((account as any)?.id_token) {
+            try {
+              const idToken = (account as any).id_token as string
+              const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString())
+              if (typeof payload?.email_verified === 'boolean') {
+                emailVerified = payload.email_verified
+              }
+            } catch {}
+          }
+
+          if (!emailVerified) {
+            // 未確認メールのアカウントはリンク/サインインを拒否
+            return false
+          }
+
           const existingUser = await prisma.user.findUnique({
             where: { email: user.email },
             include: { accounts: true },
