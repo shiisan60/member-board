@@ -9,10 +9,10 @@ const securityHeaders = [
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' data: https: blob:;
       font-src 'self' https://fonts.gstatic.com;
-      connect-src 'self' https://vitals.vercel-insights.com https://www.google-analytics.com;
+      connect-src 'self' https://vitals.vercel-insights.com https://www.google-analytics.com https://accounts.google.com https://www.googleapis.com;
       frame-ancestors 'none';
       base-uri 'self';
-      form-action 'self';
+      form-action 'self' https://accounts.google.com;
     `.replace(/\s{2,}/g, ' ').trim()
   },
   {
@@ -61,7 +61,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
       allowedOrigins: process.env.NODE_ENV === 'production' 
-        ? ['https://member-board-week2.vercel.app'] 
+        ? ['https://your-domain.com'] 
         : ['http://localhost:3000'],
     },
   },

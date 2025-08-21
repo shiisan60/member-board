@@ -7,6 +7,11 @@ import { addSecurityHeaders, addAPISecurityHeaders } from "@/lib/security/header
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // NextAuthのOAuthコールバック等は一切干渉しない（レート制限/ヘッダー付与も回避）
+  if (pathname.startsWith('/api/auth/')) {
+    return NextResponse.next()
+  }
+
   // レート制限チェック（全リクエストに適用）
   const rateLimitResponse = checkRateLimit(request)
   if (rateLimitResponse) {

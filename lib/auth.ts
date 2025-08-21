@@ -5,12 +5,24 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 
+const getPublicUrl = () => {
+  // AUTH_URL を最優先。未設定なら NEXTAUTH_URL、最後に Vercel 環境変数から導出
+  const explicit = process.env.AUTH_URL || process.env.NEXTAUTH_URL
+  if (explicit) return explicit
+  const vercelUrl = process.env.VERCEL_URL
+  if (vercelUrl) {
+    const normalized = vercelUrl.startsWith('http') ? vercelUrl : `https://${vercelUrl}`
+    return normalized
+  }
+  return undefined
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   // 本番でも一時的にデバッグを有効化（原因調査のため）
   debug: true,
   // ホスト信頼と公開URLを明示（Vercel等のプロキシ配下での不整合を防止）
-  trustHost: process.env.AUTH_TRUST_HOST === 'true',
+  trustHost: process.env.AUTH_TRUST_HOST === 'true' || !!process.env.VERCEL,
   basePath: "/api/auth",
   // next-auth v5 互換の AUTH_* を優先し、未設定時は NEXTAUTH_* を利用
   // これにより Configuration エラーを避ける
@@ -40,6 +52,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         } catch {}
         return raw
       })(),
+      // 学習/検証用途: 同一メールの既存アカウントにGoogleを自動リンク
+      // 本番運用ではメール乗っ取りリスクを避けるためオフ推奨
+      allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
       name: "credentials",
@@ -102,10 +117,49 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/login",
   },
   // 既知のトラブルを避けるため、明示的に URL/SECRET を指定
-  // AUTH_URL/NEXTAUTH_URL はメールテンプレート等でも参照
+  // AUTH_URL/NEXTAUTH_URL が無ければ VERCEL_URL から導出
   // @ts-ignore - 型にないが Auth.js v5 で有効
-  url: process.env.AUTH_URL || process.env.NEXTAUTH_URL,
+  url: getPublicUrl(),
   callbacks: {
+    async signIn({ user, account }) {
+      // Google OAuth で同一メールの既存ユーザーが居る場合、強制的にアカウントをリンク
+      try {
+        if (account?.provider === 'google' && user?.email) {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email },
+            include: { accounts: true },
+          })
+
+          if (existingUser) {
+            const alreadyLinked = existingUser.accounts.some(
+              (a) => a.provider === 'google'
+            )
+
+            if (!alreadyLinked) {
+              await prisma.account.create({
+                data: {
+                  userId: existingUser.id,
+                  type: 'oauth',
+                  provider: 'google',
+                  providerAccountId: account.providerAccountId!,
+                  access_token: (account as any).access_token ?? null,
+                  refresh_token: (account as any).refresh_token ?? null,
+                  expires_at: (account as any).expires_at ?? null,
+                  token_type: (account as any).token_type ?? null,
+                  scope: (account as any).scope ?? null,
+                  id_token: (account as any).id_token ?? null,
+                  session_state: (account as any).session_state ?? null,
+                },
+              })
+            }
+          }
+        }
+      } catch (e) {
+        console.error('[signIn:autoLink] failed:', e)
+        // 失敗してもサインイン自体は継続（既存のNextAuth挙動を阻害しない）
+      }
+      return true
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
