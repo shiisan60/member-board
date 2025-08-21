@@ -172,6 +172,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 },
               })
             }
+          } else {
+            // 既存ユーザーが存在しない場合は新規作成を許可しない
+            return false
           }
         }
       } catch (e) {

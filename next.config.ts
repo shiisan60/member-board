@@ -1,4 +1,8 @@
 import type { NextConfig } from "next";
+// Sentryでnext.configをラップ（ビルド時アップロード等は.env側のトークンで制御）
+// ここでは実行時を変えない軽量設定
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { withSentryConfig } = require('@sentry/nextjs');
 
 const securityHeaders = [
   {
@@ -102,4 +106,12 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const sentryOptions = {
+  silent: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  widenClientFileUpload: true,
+};
+
+export default withSentryConfig(nextConfig, sentryOptions);
