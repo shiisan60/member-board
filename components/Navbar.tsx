@@ -56,7 +56,7 @@ export default function Navbar() {
 
   React.useEffect(() => {
     // Check if user has admin role in session
-    if (session?.user?.role === "admin") {
+    if (session?.user?.role === "ADMIN") {
       setIsAdmin(true)
     } else {
       setIsAdmin(false)

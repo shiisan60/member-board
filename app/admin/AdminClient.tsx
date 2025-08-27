@@ -95,13 +95,27 @@ export default function AdminClient({ currentUser, stats, recentUsers, recentPos
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* ヘッダー */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ mb: 1, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-          <AdminIcon sx={{ mr: 2, color: 'warning.main' }} />
-          管理者ダッシュボード
-        </Typography>
-        <Typography variant="subtitle1" color="text.secondary">
-          システムの全体的な状況を管理・監視
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box>
+            <Typography variant="h4" sx={{ mb: 1, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+              <AdminIcon sx={{ mr: 2, color: 'warning.main' }} />
+              管理者ダッシュボード
+            </Typography>
+            <Typography variant="subtitle1" color="text.secondary">
+              システムの全体的な状況を管理・監視
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<PeopleIcon />}
+              onClick={() => router.push('/admin/users')}
+            >
+              ユーザー管理
+            </Button>
+          </Box>
+        </Box>
       </Box>
 
       {/* 統計カード */}
@@ -220,8 +234,8 @@ export default function AdminClient({ currentUser, stats, recentUsers, recentPos
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                           <Chip
                             size="small"
-                            label={user.role === 'admin' ? '管理者' : 'ユーザー'}
-                            color={user.role === 'admin' ? 'error' : 'default'}
+                            label={user.role === 'ADMIN' ? '管理者' : 'ユーザー'}
+                            color={user.role === 'ADMIN' ? 'error' : 'default'}
                           />
                           <Chip
                             size="small"

@@ -22,7 +22,7 @@ export default async function AdminPage() {
     prisma.post.count(),
     prisma.user.count({ where: { emailVerified: { not: null } } }),
     prisma.user.count({ where: { emailVerified: null } }),
-    prisma.user.count({ where: { role: 'admin' } }),
+    prisma.user.count({ where: { role: 'ADMIN' } }),
     
     // 今月のデータ
     prisma.post.count({

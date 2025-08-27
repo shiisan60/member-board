@@ -23,7 +23,7 @@ export async function requireAuth(): Promise<Session> {
 export async function requireAdmin(): Promise<Session> {
   const session = await requireAuth()
   
-  if (session.user?.role !== 'admin') {
+  if (session.user?.role !== 'ADMIN') {
     redirect('/')
   }
   
