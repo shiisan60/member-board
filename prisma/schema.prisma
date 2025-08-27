@@ -9,13 +9,13 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 // User model
 model User {
-  id                String    @id @default(cuid()) @map("_id")
+  id                String    @id @default(cuid()) 
   email             String    @unique
   password          String?   // Optional for social login
   name              String?
@@ -36,7 +36,7 @@ model User {
 
 // Account model for OAuth providers
 model Account {
-  id                String  @id @default(cuid()) @map("_id")
+  id                String  @id @default(cuid()) 
   userId            String
   type              String
   provider          String
@@ -57,7 +57,7 @@ model Account {
 
 // Session model
 model Session {
-  id           String   @id @default(cuid()) @map("_id")
+  id           String   @id @default(cuid()) 
   sessionToken String   @unique
   userId       String
   expires      DateTime
@@ -68,7 +68,7 @@ model Session {
 
 // Post model
 model Post {
-  id        String   @id @default(cuid()) @map("_id")
+  id        String   @id @default(cuid()) 
   title     String
   content   String
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
