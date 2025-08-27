@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAdminAuth } from '@/lib/admin-auth';
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 // ユーザーの詳細情報を取得
 export async function GET(
   request: NextRequest,

@@ -45,7 +45,7 @@ export default async function DashboardPage() {
 
   // サイトの統計データ（管理者の場合）
   let siteStats = null
-  if (user.role === 'admin') {
+  if ((user.role || '').toUpperCase() === 'ADMIN') {
     siteStats = {
       totalUsers: await prisma.user.count(),
       totalPosts: await prisma.post.count(),

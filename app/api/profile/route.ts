@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+// NextAuth は Node.js ランタイムで動作させる
+export const runtime = 'nodejs'
+// 認証系はキャッシュ不可
+export const dynamic = 'force-dynamic'
+
 // プロフィール取得
 export async function GET() {
   try {

@@ -45,9 +45,9 @@ export function createAdminResponse(error: string, status: number = 403) {
   );
 }
 
-export async function withAdminAuth<T>(
+export async function withAdminAuth<T = any>(
   handler: (admin: AdminUser) => Promise<NextResponse<T>>
-): Promise<NextResponse<any>> {
+): Promise<NextResponse<T>> {
   try {
     const admin = await requireAdmin();
     return await handler(admin);

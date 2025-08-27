@@ -82,7 +82,8 @@ export async function middleware(request: NextRequest) {
 
     // 管理者ページの場合、roleチェック
     if (pathname.startsWith('/admin')) {
-      if (session.user?.role !== 'admin') {
+      const role = (session.user?.role || '').toUpperCase()
+      if (role !== 'ADMIN') {
         return NextResponse.redirect(new URL('/', request.url))
       }
     }

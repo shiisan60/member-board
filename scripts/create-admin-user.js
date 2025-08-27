@@ -22,7 +22,7 @@ async function createAdminUser() {
         email: 'admin@example.com',
         password: hashedPassword,
         name: '管理者ユーザー',
-        role: 'admin',
+        role: 'ADMIN',
         emailVerified: new Date(),
       }
     });
@@ -30,7 +30,7 @@ async function createAdminUser() {
     console.log('✅ 管理者ユーザーを作成しました:');
     console.log('   📧 Email: admin@example.com');
     console.log('   🔑 Password: Admin1234!');
-    console.log('   👑 Role: admin');
+    console.log('   👑 Role: ADMIN');
     console.log('   ✓ メール認証: 完了\n');
 
     console.log('========================================');
