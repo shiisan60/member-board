@@ -17,6 +17,7 @@
     "test:email:config": "node scripts/test-email-config.js",
     "test:email:smtp": "node scripts/test-smtp-connection.js",
     "test:email": "npm run test:email:config && npm run test:email:smtp",
+    "setup:vercel:email": "node scripts/setup-vercel-email.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

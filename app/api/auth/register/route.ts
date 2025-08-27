@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth';
 import { checkPasswordStrength, validateEmail } from '@/lib/validators';
-import { sendVerificationEmail } from '@/lib/email';
+import { sendVerificationEmail } from '@/lib/email-service';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
