@@ -25,13 +25,25 @@ function setupDatabaseUrl() {
     );
     console.log('Available PostgreSQL env keys:', pgEnvKeys);
     
-    // 優先順位でPostgreSQL URLを選択（Neon固有の変数を優先）
+    // Neonの構成要素から完全なURLを構築
+    const host = process.env.DB_URL_POSTGRES_HOST || process.env.DB_URL_PGHOST;
+    const user = process.env.DB_URL_POSTGRES_USER || process.env.DB_URL_PGUSER;
+    const password = process.env.DB_URL_POSTGRES_PASSWORD || process.env.DB_URL_PGPASSWORD;
+    const database = process.env.DB_URL_POSTGRES_DATABASE || process.env.DB_URL_PGDATABASE;
+    
+    // 優先順位でPostgreSQL URLを選択
     if (process.env.DB_URL_POSTGRES_PRISMA_URL) {
       console.log('Using DB_URL_POSTGRES_PRISMA_URL for PostgreSQL connection');
       process.env.DATABASE_URL = process.env.DB_URL_POSTGRES_PRISMA_URL;
     } else if (process.env.DB_URL_POSTGRES_URL) {
       console.log('Using DB_URL_POSTGRES_URL for PostgreSQL connection');
       process.env.DATABASE_URL = process.env.DB_URL_POSTGRES_URL;
+    } else if (host && user && password && database) {
+      // 手動でPostgreSQL URLを構築
+      const constructedUrl = `postgresql://${user}:${password}@${host}/${database}?sslmode=require`;
+      console.log('Manually constructed PostgreSQL URL from components');
+      console.log(`Host: ${host}, User: ${user}, Database: ${database}`);
+      process.env.DATABASE_URL = constructedUrl;
     } else if (process.env.DB_URL_POOLED) {
       console.log('Using DB_URL_POOLED for PostgreSQL connection');
       process.env.DATABASE_URL = process.env.DB_URL_POOLED;
