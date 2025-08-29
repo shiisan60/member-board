@@ -2,19 +2,50 @@ import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
-// Vercelの本番環境でDB_URLを使用する場合のフォールバック
-if (process.env.DB_URL && !process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = process.env.DB_URL;
+// 環境変数の動的マッピング関数
+function setupDatabaseUrl() {
+  console.log('=== Database URL Setup ===');
+  
+  // 現在の状態を確認
+  console.log('Before mapping:');
+  console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+  console.log('DB_URL exists:', !!process.env.DB_URL);
+  console.log('DB_URL_POOLED exists:', !!process.env.DB_URL_POOLED);
+  console.log('DB_URL_NONPOOLED exists:', !!process.env.DB_URL_NONPOOLED);
+  
+  // Vercel/Neonの環境変数マッピング
+  if (!process.env.DATABASE_URL) {
+    if (process.env.DB_URL_POOLED) {
+      console.log('Mapping DB_URL_POOLED to DATABASE_URL');
+      process.env.DATABASE_URL = process.env.DB_URL_POOLED;
+    } else if (process.env.DB_URL_NONPOOLED) {
+      console.log('Mapping DB_URL_NONPOOLED to DATABASE_URL');
+      process.env.DATABASE_URL = process.env.DB_URL_NONPOOLED;
+    } else if (process.env.DB_URL) {
+      console.log('Mapping DB_URL to DATABASE_URL');
+      process.env.DATABASE_URL = process.env.DB_URL;
+    }
+  }
+  
+  // 結果を確認
+  console.log('After mapping:');
+  console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+  console.log('DATABASE_URL starts with:', process.env.DATABASE_URL?.substring(0, 20) + '...');
+  console.log('========================');
 }
-
-const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    // デバッグ情報を追加
-    console.log('Environment check:');
-    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
-    console.log('DB_URL exists:', !!process.env.DB_URL);
+    // 環境変数を動的にセットアップ
+    setupDatabaseUrl();
+    
+    // DATABASE_URLが設定されていない場合はエラー
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL is not configured after mapping attempt');
+    }
+    
+    // Prismaクライアントを動的に作成
+    const prisma = new PrismaClient();
     
     // Check database connection
     await prisma.$connect();
@@ -44,6 +75,8 @@ export async function GET() {
       }
     });
 
+    await prisma.$disconnect();
+    
     return NextResponse.json({
       success: true,
       message: 'Admin user created successfully',
@@ -51,12 +84,25 @@ export async function GET() {
     });
   } catch (error: any) {
     console.error('Database initialization error:', error);
+    
+    // より詳細なエラー情報
+    const errorInfo = {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      envCheck: {
+        DATABASE_URL_exists: !!process.env.DATABASE_URL,
+        DATABASE_URL_preview: process.env.DATABASE_URL?.substring(0, 30) + '...',
+        NODE_ENV: process.env.NODE_ENV,
+        VERCEL_ENV: process.env.VERCEL_ENV,
+      }
+    };
+    
     return NextResponse.json({
       success: false,
       error: error.message,
-      hint: 'Make sure DATABASE_URL is configured and Prisma schema is pushed to database'
+      debug: errorInfo,
+      hint: 'Check Vercel logs for detailed environment variable information'
     }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }
