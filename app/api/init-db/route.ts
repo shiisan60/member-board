@@ -25,8 +25,14 @@ function setupDatabaseUrl() {
     );
     console.log('Available PostgreSQL env keys:', pgEnvKeys);
     
-    // 優先順位でPostgreSQL URLを選択
-    if (process.env.DB_URL_POOLED) {
+    // 優先順位でPostgreSQL URLを選択（Neon固有の変数を優先）
+    if (process.env.DB_URL_POSTGRES_PRISMA_URL) {
+      console.log('Using DB_URL_POSTGRES_PRISMA_URL for PostgreSQL connection');
+      process.env.DATABASE_URL = process.env.DB_URL_POSTGRES_PRISMA_URL;
+    } else if (process.env.DB_URL_POSTGRES_URL) {
+      console.log('Using DB_URL_POSTGRES_URL for PostgreSQL connection');
+      process.env.DATABASE_URL = process.env.DB_URL_POSTGRES_URL;
+    } else if (process.env.DB_URL_POOLED) {
       console.log('Using DB_URL_POOLED for PostgreSQL connection');
       process.env.DATABASE_URL = process.env.DB_URL_POOLED;
     } else if (process.env.DB_URL_NONPOOLED) {
@@ -39,7 +45,7 @@ function setupDatabaseUrl() {
       // PostgreSQL URLを環境変数から探す
       for (const key of pgEnvKeys) {
         const value = process.env[key];
-        if (value && value.startsWith('postgres')) {
+        if (value && (value.startsWith('postgres') || value.startsWith('postgresql'))) {
           console.log(`Using ${key} for PostgreSQL connection`);
           process.env.DATABASE_URL = value;
           break;
