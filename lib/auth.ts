@@ -26,6 +26,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   basePath: "/api/auth",
   // next-auth v5 互換の AUTH_* を優先し、未設定時は NEXTAUTH_* を利用
   // これにより Configuration エラーを避ける
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   providers: [
     Google({
       // 複数の環境変数にフォールバック + JSON貼り付け誤りにも耐性を持たせる
@@ -202,7 +203,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
 })
 
 export async function hashPassword(password: string) {
