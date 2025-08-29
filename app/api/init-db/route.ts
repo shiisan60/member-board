@@ -14,16 +14,37 @@ function setupDatabaseUrl() {
   console.log('DB_URL_NONPOOLED exists:', !!process.env.DB_URL_NONPOOLED);
   
   // Vercel/Neonの環境変数マッピング
-  if (!process.env.DATABASE_URL) {
+  // DATABASE_URLがMongoDBの場合は、PostgreSQL URLで上書き
+  const currentUrl = process.env.DATABASE_URL;
+  if (!currentUrl || currentUrl.startsWith('mongodb')) {
+    console.log('Current DATABASE_URL is MongoDB or missing, looking for PostgreSQL URL...');
+    
+    // PostgreSQL用のNeon URLを探す
+    const pgEnvKeys = Object.keys(process.env).filter(key => 
+      key.includes('POSTGRES') || key.includes('DB_URL')
+    );
+    console.log('Available PostgreSQL env keys:', pgEnvKeys);
+    
+    // 優先順位でPostgreSQL URLを選択
     if (process.env.DB_URL_POOLED) {
-      console.log('Mapping DB_URL_POOLED to DATABASE_URL');
+      console.log('Using DB_URL_POOLED for PostgreSQL connection');
       process.env.DATABASE_URL = process.env.DB_URL_POOLED;
     } else if (process.env.DB_URL_NONPOOLED) {
-      console.log('Mapping DB_URL_NONPOOLED to DATABASE_URL');
+      console.log('Using DB_URL_NONPOOLED for PostgreSQL connection');
       process.env.DATABASE_URL = process.env.DB_URL_NONPOOLED;
     } else if (process.env.DB_URL) {
-      console.log('Mapping DB_URL to DATABASE_URL');
+      console.log('Using DB_URL for PostgreSQL connection');
       process.env.DATABASE_URL = process.env.DB_URL;
+    } else {
+      // PostgreSQL URLを環境変数から探す
+      for (const key of pgEnvKeys) {
+        const value = process.env[key];
+        if (value && value.startsWith('postgres')) {
+          console.log(`Using ${key} for PostgreSQL connection`);
+          process.env.DATABASE_URL = value;
+          break;
+        }
+      }
     }
   }
   
