@@ -2,10 +2,20 @@ import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
+// Vercelの本番環境でDB_URLを使用する場合のフォールバック
+if (process.env.DB_URL && !process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = process.env.DB_URL;
+}
+
 const prisma = new PrismaClient();
 
 export async function GET() {
   try {
+    // デバッグ情報を追加
+    console.log('Environment check:');
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+    console.log('DB_URL exists:', !!process.env.DB_URL);
+    
     // Check database connection
     await prisma.$connect();
     
