@@ -2,16 +2,27 @@
 // Vercel環境でDB_URLをDATABASE_URLにマッピング
 
 export function initDatabaseConfig() {
-  // DB_URLが設定されていてDATABASE_URLが未設定の場合
-  if (process.env.DB_URL && !process.env.DATABASE_URL) {
-    console.log('[DB Config] Mapping DB_URL to DATABASE_URL');
-    process.env.DATABASE_URL = process.env.DB_URL;
+  // Vercel/Neonの環境変数マッピング
+  // DB_URL_POOLEDまたはDB_URL_NONPOOLEDが設定されている場合
+  if (!process.env.DATABASE_URL) {
+    if (process.env.DB_URL_POOLED) {
+      console.log('[DB Config] Mapping DB_URL_POOLED to DATABASE_URL');
+      process.env.DATABASE_URL = process.env.DB_URL_POOLED;
+    } else if (process.env.DB_URL_NONPOOLED) {
+      console.log('[DB Config] Mapping DB_URL_NONPOOLED to DATABASE_URL');
+      process.env.DATABASE_URL = process.env.DB_URL_NONPOOLED;
+    } else if (process.env.DB_URL) {
+      console.log('[DB Config] Mapping DB_URL to DATABASE_URL');
+      process.env.DATABASE_URL = process.env.DB_URL;
+    }
   }
   
   // デバッグログ（本番環境でも一時的に出力）
   console.log('[DB Config] Environment variables:');
   console.log('  DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not set');
   console.log('  DB_URL:', process.env.DB_URL ? 'Set' : 'Not set');
+  console.log('  DB_URL_POOLED:', process.env.DB_URL_POOLED ? 'Set' : 'Not set');
+  console.log('  DB_URL_NONPOOLED:', process.env.DB_URL_NONPOOLED ? 'Set' : 'Not set');
   
   // DATABASE_URLの検証
   if (!process.env.DATABASE_URL) {
