@@ -10,26 +10,32 @@ export default async function PostsPage() {
     redirect('/login');
   }
 
-  const postsData = await prisma.post.findMany({
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
+  try {
+    const postsData = await prisma.post.findMany({
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
         },
       },
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
 
-  const posts = postsData.map(post => ({
-    ...post,
-    createdAt: post.createdAt.toISOString(),
-    updatedAt: post.updatedAt.toISOString(),
-  }));
+    const posts = postsData.map(post => ({
+      ...post,
+      createdAt: post.createdAt.toISOString(),
+      updatedAt: post.updatedAt.toISOString(),
+    }));
 
-  return <PostListClient initialPosts={posts} />;
+    return <PostListClient initialPosts={posts} />;
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    // 空の配列を渡してエラーを回避
+    return <PostListClient initialPosts={[]} />;
+  }
 }
