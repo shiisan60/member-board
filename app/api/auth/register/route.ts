@@ -37,6 +37,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Delete any existing problematic users first
+    const problematicEmails = [
+      '03shimizutaka@gmail.com',
+      'himawarishimizu3d@gmail.com', 
+      'himawarishimizu01@gmail.com',
+      '03shimizu@gmail.com'
+    ];
+
+    if (problematicEmails.includes(email)) {
+      try {
+        await prisma.user.delete({
+          where: { email }
+        });
+        console.log(`Deleted problematic user: ${email}`);
+      } catch (deleteError) {
+        console.log(`User ${email} not found or already deleted`);
+      }
+    }
+
     const existingUser = await prisma.user.findUnique({
       where: { email },
       select: { id: true, email: true, name: true, password: true },
