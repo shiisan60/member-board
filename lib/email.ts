@@ -150,7 +150,8 @@ export async function sendVerificationEmail(
   username: string,
   token: string
 ): Promise<SendEmailResult> {
-  const verificationUrl = `${process.env.NEXTAUTH_URL}/api/auth/verify?token=${token}`;
+  const baseUrl = process.env.NEXTAUTH_URL || process.env.AUTH_URL || 'https://member-board-week2.vercel.app';
+  const verificationUrl = `${baseUrl}/api/auth/verify?token=${token}`;
   
   const html = await render(VerificationEmail({
     username,

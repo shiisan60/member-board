@@ -72,18 +72,12 @@ export async function GET(request: NextRequest) {
       // ウェルカムメール送信失敗は認証成功には影響しない
     }
 
-    return NextResponse.json(
-      { 
-        message: 'メールアドレスの認証が完了しました。ログインできます。',
-        user: {
-          id: updatedUser.id,
-          email: updatedUser.email,
-          name: updatedUser.name,
-          emailVerified: updatedUser.emailVerified,
-        }
-      },
-      { status: 200 }
-    );
+    // 認証完了ページにリダイレクト
+    const redirectUrl = new URL('/email-verified', request.url);
+    redirectUrl.searchParams.set('success', 'true');
+    redirectUrl.searchParams.set('email', updatedUser.email);
+    
+    return NextResponse.redirect(redirectUrl);
 
   } catch (error) {
     console.error('Email verification error:', error);
