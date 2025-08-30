@@ -137,10 +137,16 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     console.error('Registration error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
     return NextResponse.json(
       { 
         error: '登録処理中にエラーが発生しました',
-        details: error.message
+        details: error.message,
+        code: error.code
       },
       { status: 500 }
     );
