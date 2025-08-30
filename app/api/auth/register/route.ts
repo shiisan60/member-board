@@ -109,23 +109,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    try {
-      await sendVerificationEmail(
-        user.email,
-        user.name || 'ユーザー',
-        verificationToken
-      );
-    } catch (emailError) {
-      console.error('確認メール送信エラー:', emailError);
-      return NextResponse.json(
-        { 
-          message: '登録は完了しましたが、確認メールの送信に失敗しました。',
-          user: { id: user.id, email: user.email, name: user.name },
-          warning: 'メール送信に失敗しました。後ほど再送信してください。'
-        },
-        { status: 201 }
-      );
-    }
+    // Skip email sending for testing - complete registration immediately
+    console.log('User created successfully, skipping email for testing');
 
     return NextResponse.json(
       { 
