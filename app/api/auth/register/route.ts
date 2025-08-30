@@ -114,21 +114,53 @@ export async function POST(request: NextRequest) {
     tokenExpiry.setHours(tokenExpiry.getHours() + 24); // 24時間有効
 
     // ユーザーを作成（emailVerifiedはnullのまま）
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name: name || email.split('@')[0],
-        verificationToken,
-        tokenExpiry,
-        emailVerified: null, // メール未認証状態
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-      },
-    });
+    let user;
+    try {
+      user = await prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          name: name || email.split('@')[0],
+          verificationToken,
+          tokenExpiry,
+          emailVerified: null, // メール未認証状態
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+        },
+      });
+    } catch (createError) {
+      console.error('User creation failed:', createError);
+      // 作成に失敗した場合、既存の問題のあるユーザーを削除して再試行
+      try {
+        await prisma.user.delete({
+          where: { email }
+        });
+        console.log(`Deleted existing problematic user ${email}, retrying creation...`);
+        
+        user = await prisma.user.create({
+          data: {
+            email,
+            password: hashedPassword,
+            name: name || email.split('@')[0],
+            verificationToken,
+            tokenExpiry,
+            emailVerified: null,
+          },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        });
+        console.log(`✅ Successfully created user after cleanup: ${email}`);
+      } catch (retryError) {
+        console.error('Retry user creation failed:', retryError);
+        throw retryError;
+      }
+    }
 
     // 確認メールを送信
     try {
