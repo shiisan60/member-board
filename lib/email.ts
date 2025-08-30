@@ -147,11 +147,11 @@ export function validateEmailTemplate(templateName: string, props: any): boolean
 
 export async function sendVerificationEmail(
   email: string,
-  username: string,
   token: string
 ): Promise<SendEmailResult> {
   const baseUrl = process.env.NEXTAUTH_URL || process.env.AUTH_URL || 'https://member-board-week2.vercel.app';
   const verificationUrl = `${baseUrl}/api/auth/verify?token=${token}`;
+  const username = email.split('@')[0];
   
   const html = await render(VerificationEmail({
     username,

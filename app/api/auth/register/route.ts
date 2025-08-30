@@ -109,17 +109,39 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Skip email sending for testing - complete registration immediately
-    console.log('User created successfully, skipping email for testing');
-
-    return NextResponse.json(
-      { 
-        message: '仮登録が完了しました。確認メールをご確認ください。',
-        user: { id: user.id, email: user.email, name: user.name },
-        requiresEmailVerification: true
-      },
-      { status: 201 }
-    );
+    // Send verification email
+    try {
+      console.log('Attempting to send verification email to:', email);
+      await sendVerificationEmail(email, verificationToken);
+      console.log('Verification email sent successfully');
+      
+      return NextResponse.json(
+        { 
+          message: '仮登録が完了しました。確認メールをご確認ください。',
+          user: { id: user.id, email: user.email, name: user.name },
+          requiresEmailVerification: true
+        },
+        { status: 201 }
+      );
+    } catch (emailError: any) {
+      console.error('Failed to send verification email:', emailError);
+      
+      // Delete the user if email sending fails to prevent orphaned records
+      try {
+        await prisma.user.delete({ where: { id: user.id } });
+        console.log('Deleted user due to email sending failure');
+      } catch (deleteError) {
+        console.error('Failed to delete user after email error:', deleteError);
+      }
+      
+      return NextResponse.json(
+        { 
+          error: 'メール送信に失敗しました。再度お試しください。',
+          details: emailError.message
+        },
+        { status: 500 }
+      );
+    }
   } catch (error: any) {
     console.error('Registration error:', error);
     console.error('Error details:', {
