@@ -41,34 +41,64 @@ export async function POST(request: NextRequest) {
     }
 
     // 既存ユーザーの確認
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true, email: true, name: true, password: true },
-    });
+    let existingUser;
+    try {
+      existingUser = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true, email: true, name: true, password: true },
+      });
+    } catch (findError) {
+      // 古いCUID形式のIDが原因でクエリが失敗する場合、そのユーザーを削除
+      console.log(`Find user failed for ${email}, attempting cleanup...`);
+      try {
+        await prisma.user.delete({
+          where: { email }
+        });
+        console.log(`✅ Deleted problematic user: ${email}`);
+        existingUser = null;
+      } catch (deleteError) {
+        console.error(`Failed to delete problematic user ${email}:`, deleteError);
+        existingUser = null;
+      }
+    }
 
     // 既に存在していて、かつパスワード未設定（例: Googleログインで作成）の場合は
     // パスワードを設定して通常ログインできるように更新する
     if (existingUser && !existingUser.password) {
-      const hashedPassword = await hashPassword(password);
-      const updated = await prisma.user.update({
-        where: { id: existingUser.id },
-        data: {
-          password: hashedPassword,
-          name: existingUser.name || name || email.split('@')[0],
-        },
-        select: { id: true, email: true, name: true },
-      });
+      try {
+        const hashedPassword = await hashPassword(password);
+        const updated = await prisma.user.update({
+          where: { id: existingUser.id },
+          data: {
+            password: hashedPassword,
+            name: existingUser.name || name || email.split('@')[0],
+          },
+          select: { id: true, email: true, name: true },
+        });
 
-      return NextResponse.json(
-        {
-          message: '既存アカウントにパスワードを設定しました。ログインできます。',
-          user: { id: updated.id, email: updated.email, name: updated.name },
-        },
-        { status: 200 }
-      );
+        return NextResponse.json(
+          {
+            message: '既存アカウントにパスワードを設定しました。ログインできます。',
+            user: { id: updated.id, email: updated.email, name: updated.name },
+          },
+          { status: 200 }
+        );
+      } catch (updateError) {
+        // 更新に失敗した場合、古いユーザーを削除して新規作成を続行
+        console.log(`Update failed for ${email}, deleting old user...`);
+        try {
+          await prisma.user.delete({
+            where: { email }
+          });
+          console.log(`✅ Deleted and will recreate user: ${email}`);
+          existingUser = null;
+        } catch (deleteError) {
+          console.error(`Failed to delete user ${email}:`, deleteError);
+        }
+      }
     }
 
-    if (existingUser) {
+    if (existingUser && existingUser.password) {
       return NextResponse.json(
         { error: 'このメールアドレスは既に登録されています' },
         { status: 400 }
